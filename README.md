@@ -1,5 +1,5 @@
-Repetitive: Repetitive tasks eradicator module for Awesome WM
-=============================================================
+Repetitive tasks eradicator for Awesome WM
+==========================================
 
 This module allow Awesome users to map F keys (F1-F12) to either select tags, clients or execute macros.
 

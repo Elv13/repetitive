@@ -1,8 +1,9 @@
 local unpack = unpack
-local aw_button = require( "awful.button" )
-local aw_util   = require( "awful.util"   )
-local aw_key    = require( "awful.key"    )
-local tag       = require( "awful.tag"    )
+local aw_button = require( "awful.button"    )
+local aw_util   = require( "awful.util"      )
+local aw_key    = require( "awful.key"       )
+local tag       = require( "awful.tag"       )
+local macro     = require( "repetitive.macro")
 
 local capi = {timer = timer,root=root,client=client,mouse=mouse}
 
@@ -49,6 +50,16 @@ local function generate_key_binding()
         -- Bind macros TODO
         bindings[#bindings+1] = aw_key({ "Control" }, "F"..i, function ()
             hook_key(i)
+            print("Set Macro")
+            local m = nil
+            macro.record(function(aMacro) m = aMacro; print("setting macro") end)
+            fav[i] = function()
+                if m then
+                    macro.play(m)
+                else
+                    print("Nothing to playback")
+                end
+            end
         end)
     end
     return bindings
