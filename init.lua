@@ -15,7 +15,6 @@ local already_set = {}
 local function hook_key(key)
     if not already_set[key] then
         capi.root.keys(aw_util.table.join(capi.root.keys(),aw_key({}, "F"..key, function ()
-            print("set"..key)
             fav[key]()
         end)))
         already_set[key] = true
@@ -30,9 +29,33 @@ local function generate_key_binding()
         bindings[#bindings+1] = aw_key({ "Mod4" }, "F"..i, function ()
             hook_key(i)
             local c = capi.client.focus --TODO manage "unmanage" signal
+            -- Try to get a favorite tag
+            local fav_tag = setmetatable({}, { __mode = 'v' })
+            local c_tags = c:tags()
+            for k,t in ipairs(c_tags) do
+                if t.selected then
+                    fav_tag[#fav_tag+1] = t
+                end
+            end
             fav[i] = function()
-                if c:tags()[1] ~= tag.selected(c.screen) then
-                    tag.viewonly(c:tags()[1])
+                local tags = c:tags()
+                -- Check if one of the tag is not already selected
+                local selected = false
+                for k,t in ipairs(tags) do
+                    for k2,t2 in ipairs(tag.selectedlist(c.screen)) do
+                        selected = t==t2
+                        if selected then break end
+                    end
+                    if selected then break end
+                end
+                if not selected then
+                    -- Try to see if the favorite tag(s) is still available
+                    if fav_tag[1] then
+                        tag.viewonly(fav_tag[1])
+                    else
+                        -- Too bad, history is not accessible from here anyway
+                        tag.viewonly(tags[1])
+                    end
                 end
                 capi.client.focus = c
             end
