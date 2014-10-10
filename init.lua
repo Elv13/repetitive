@@ -10,6 +10,7 @@ local capi = {timer = timer,root=root,client=client,mouse=mouse}
 local module = {}
 local fav = {}
 local already_set = {}
+local coords_cache = setmetatable({}, { __mode = 'k' })
 
 -- Add a new keybinding to 'key' if not already set
 local function hook_key(key)
@@ -21,6 +22,15 @@ local function hook_key(key)
     end
 end
 
+local function gen_delta_cache(c)
+    local mc,geo = capi.mouse.coords(),c:geometry()
+    if not (mc.x>=geo.x and mc.x<=geo.x+geo.width and mc.y>=geo.y and mc.y<=geo.y+geo.height) then
+        return coords_cache[c]
+    else
+        return {x=mc.x-geo.x,y=mc.y-geo.y} --Relative position
+    end
+end
+
 -- Generate setters keybindings
 local function generate_key_binding()
     local bindings = {}
@@ -29,6 +39,8 @@ local function generate_key_binding()
         bindings[#bindings+1] = aw_key({ "Mod4" }, "F"..i, function ()
             hook_key(i)
             local c = capi.client.focus --TODO manage "unmanage" signal
+            if not c then return end
+            coords_cache[c] = gen_delta_cache(c)
             -- Try to get a favorite tag
             local fav_tag = setmetatable({}, { __mode = 'v' })
             local c_tags = c:tags()
@@ -38,6 +50,11 @@ local function generate_key_binding()
                 end
             end
             fav[i] = function()
+                -- Update the delta cache
+                local cur_c = capi.client.focus
+                if cur_c and coords_cache[cur_c] then
+                    coords_cache[cur_c] = gen_delta_cache(cur_c)
+                end
                 local tags = c:tags()
                 -- Check if one of the tag is not already selected
                 local selected = false
@@ -58,6 +75,12 @@ local function generate_key_binding()
                     end
                 end
                 capi.client.focus = c
+                local geo = c:geometry()
+                if coords_cache[c] then
+                    -- this will correctly restore the cursor when switching between 2 places
+                    -- does not work very well when a client have multiple sizes at once
+                    capi.mouse.coords({x=geo.x+coords_cache[c].x,y=geo.y+coords_cache[c].y})
+                end
             end
         end)
 
