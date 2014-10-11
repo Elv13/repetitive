@@ -4,23 +4,13 @@ local aw_util   = require( "awful.util"      )
 local aw_key    = require( "awful.key"       )
 local tag       = require( "awful.tag"       )
 local macro     = require( "repetitive.macro")
+local shortcut  = require( "repetitive.shortcut")
+local common    = require( "repetitive.common")
 
 local capi = {timer = timer,root=root,client=client,mouse=mouse}
 
 local module = {}
-local fav = {}
-local already_set = {}
 local coords_cache = setmetatable({}, { __mode = 'k' })
-
--- Add a new keybinding to 'key' if not already set
-local function hook_key(key)
-    if not already_set[key] then
-        capi.root.keys(aw_util.table.join(capi.root.keys(),aw_key({}, "F"..key, function ()
-            fav[key]()
-        end)))
-        already_set[key] = true
-    end
-end
 
 local function gen_delta_cache(c)
     local mc,geo = capi.mouse.coords(),c:geometry()
@@ -36,8 +26,9 @@ local function generate_key_binding()
     local bindings = {}
     for i=1,12 do
         -- Bind clients
-        bindings[#bindings+1] = aw_key({ "Mod4" }, "F"..i, function ()
-            hook_key(i)
+        local fk = "F"..i
+        bindings[#bindings+1] = aw_key({ "Mod4" }, fk, function ()
+            common.hook_key(fk)
             local c = capi.client.focus --TODO manage "unmanage" signal
             if not c then return end
             coords_cache[c] = gen_delta_cache(c)
@@ -49,7 +40,7 @@ local function generate_key_binding()
                     fav_tag[#fav_tag+1] = t
                 end
             end
-            fav[i] = function()
+            common.fav[fk] = function()
                 -- Update the delta cache
                 local cur_c = capi.client.focus
                 if cur_c and coords_cache[cur_c] then
@@ -85,21 +76,21 @@ local function generate_key_binding()
         end)
 
         -- Bind tags
-        bindings[#bindings+1] = aw_key({ "Mod1" }, "F"..i, function ()
-            hook_key(i)
+        bindings[#bindings+1] = aw_key({ "Mod1" }, fk, function ()
+            common.hook_key(fk)
             local t = tag.selected(capi.client.focus and capi.client.focus.screen or capi.mouse.screen)
-            fav[i] = function() --TODO manage "deleted" signal
+            common.fav[fk] = function() --TODO manage "deleted" signal
                 tag.viewonly(t)
             end
         end)
 
         -- Bind macros TODO
-        bindings[#bindings+1] = aw_key({ "Control" }, "F"..i, function ()
-            hook_key(i)
+        bindings[#bindings+1] = aw_key({ "Control" }, fk, function ()
+            common.hook_key(fk)
             print("Set Macro")
             local m = nil
             macro.record(function(aMacro) m = aMacro; print("setting macro") end)
-            fav[i] = function()
+            common.fav[fk] = function()
                 if m then
                     macro.play(m)
                 else
