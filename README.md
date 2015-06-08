@@ -78,5 +78,5 @@ In a function:
 Or for clients:
 
 ```lua
-    awful.client.propoery.set(c,"shortcu", { {"Mond4}, "e" })
+    awful.client.propoery.set(c,"shortcut", { {"Mond4}, "e" })
 ```
