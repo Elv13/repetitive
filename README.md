@@ -1,6 +1,9 @@
 Repetitive tasks eradicator for Awesome WM
 ==========================================
 
+**Warning** Awesome 3.5 users should use the `awesome3.5` branch. This module
+officially support 4.0+.
+
 This module allow Awesome users to map keyboard shortcuts to actions. Supported
 actions are:
 
